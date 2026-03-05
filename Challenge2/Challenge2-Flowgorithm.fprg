@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<flowgorithm fileversion="4.2">
+    <attributes>
+        <attribute name="name" value="Challenge2-Flowgorithm"/>
+        <attribute name="authors" value="hp"/>
+        <attribute name="about" value=""/>
+        <attribute name="saved" value="2026-03-05 11:10:20 "/>
+        <attribute name="created" value="aHA7REVTS1RPUC0xSjNRRVA4OzIwMjYtMDMtMDU7IjEwOjI4OjIyICI7MjQ0Nw=="/>
+        <attribute name="edited" value="aHA7REVTS1RPUC0xSjNRRVA4OzIwMjYtMDMtMDU7IjExOjEwOjIwICI7MTsyNTQ1"/>
+    </attributes>
+    <function name="Main" type="None" variable="">
+        <parameters/>
+        <body>
+            <declare name="age" type="Integer" array="False" size=""/>
+            <declare name="price" type="Integer" array="False" size=""/>
+            <input variable="age"/>
+            <if expression="age&lt;12">
+                <then>
+                    <assign variable="price" expression="20"/>
+                </then>
+                <else>
+                    <if expression="age&gt;=12 &amp;&amp; age&gt;=18">
+                        <then>
+                            <assign variable="price" expression="40"/>
+                        </then>
+                        <else>
+                            <if expression="age&gt;60">
+                                <then>
+                                    <assign variable="price" expression="30"/>
+                                </then>
+                                <else>
+                                    <assign variable="price" expression="60"/>
+                                </else>
+                            </if>
+                        </else>
+                    </if>
+                </else>
+            </if>
+            <if expression="price == 20">
+                <then>
+                    <output expression="&quot;the price is : &quot; &amp;price&amp; &quot;DH&quot;&amp;tochar(13)&amp;&quot;Special: Children's Menu included!&quot;" newline="True"/>
+                </then>
+                <else>
+                    <output expression="&quot;the price is : &quot;&amp; price &amp;&quot;DH &quot;" newline="True"/>
+                </else>
+            </if>
+        </body>
+    </function>
+</flowgorithm>
