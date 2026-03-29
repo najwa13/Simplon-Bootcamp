@@ -1,5 +1,4 @@
 <?php
-session_start();
 require 'db.php';
 
 if(!isset($_SESSION['user'])) exit();
@@ -8,12 +7,12 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_prompt'])){
     $title = trim($_POST['title']);
     $category_id = intval($_POST['category_id']);
     $content = trim($_POST['content']);
-    $user_id = $_SESSION['user_id'];
+    $user_id = $_SESSION['id'];
 
     if($title && $category_id && $content){
         $stmt = $pdo->prepare("INSERT INTO prompts (user_id, category_id, title, content) VALUES (?,?,?,?)");
         $stmt->execute([$user_id, $category_id, $title, $content]);
-        header("Location: " . $_SERVER['HTTP_REFERER']);
+        header("Location: user_index.php " );
         exit();
     }
 }
