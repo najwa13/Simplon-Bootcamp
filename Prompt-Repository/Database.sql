@@ -26,5 +26,10 @@ CREATE TABLE prompts(
     REFERENCES users(id) ON DELETE CASCADE 
 );
 
+INSERT INTO categories (name) VALUES 
+('Développement'), 
+('Marketing'), 
+('Design');
+
 INSERT INTO users (username, email, password,role) 
 VALUES ('najwa','najwa@devgenius.com', '$2y$10$JmfMn7g9mz.3epRCzysEu.PXqHQ2bZM2as51LnXpjko7gqqyEiydm' ,'admin');
