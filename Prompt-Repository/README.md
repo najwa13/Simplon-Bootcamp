@@ -21,11 +21,11 @@ Le projet repose sur une architecture **LAMP** (Linux, Apache, MySQL, PHP) moder
 ## Captures d'écran
 
 ### 1. Espace Administration (Dashboard)
-![Dashboard Admin](https://raw.githubusercontent.com/najwa13/Simplon-Bootcamp/master/Prompt-Repository/admin_dashboard.png)
+![Admin](./admin.png)
 *Aperçu des statistiques globales, du classement des contributeurs et de la gestion des catégories.*
 
 ### 2. Espace Utilisateur & Communauté
-(![Espace User](https://raw.githubusercontent.com/najwa13/Simplon-Bootcamp/master/Prompt-Repository/user_dashboard.png))
+![User](./user.png)
 *Interface de gestion des prompts personnels et explorateur de la communauté avec filtres dynamiques.*
 
 ---
