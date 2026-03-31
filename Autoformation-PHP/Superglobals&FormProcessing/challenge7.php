@@ -15,8 +15,9 @@
     }
     ?>
     <h2>Contact Form</h2>
-    <form method="post">
-        Name : <input type="text" name="name" value="<?php echo "$name" ?>"><br>
+    <form method="POST">
+        Name :<br>
+         <input type="text" name="name" value="<?php echo "$name" ?>"><br>
         E-mail :<input type="text" name="email"><br>
         Message :<br>
         <textarea name="message" ></textarea><br>
