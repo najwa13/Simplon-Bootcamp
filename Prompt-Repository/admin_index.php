@@ -1,7 +1,7 @@
 <?php
 session_start();
 require 'db.php';
-require 'filter_prompt.php'; 
+require 'process_prompts.php'; 
 
 // SÉCURITÉ : Vérification du rôle admin
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
@@ -24,7 +24,7 @@ if(isset($_POST['add_category'])){
 
 // Supprimer une catégorie
 if(isset($_GET['delete_category'])){
-    $id = intval($_GET['delete_category']);
+    $id = $_GET['delete_category'];
     $stmt = $pdo->prepare("DELETE FROM categories WHERE id=?");
     $stmt->execute([$id]);
     header("Location: admin_index.php");
@@ -48,7 +48,7 @@ $stats_users = $pdo->query($sql_stats)->fetchAll();
 
 // 2. RÉCUPÉRATION DES CATÉGORIES ET USERS (pour les filtres)
 $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAll();
-$all_users_list = $pdo->query("SELECT id, username FROM users ORDER BY username ASC")->fetchAll();
+$all_users_list = $pdo->query("SELECT id, username FROM users  WHERE  role !='admin' ORDER BY username ASC")->fetchAll();
 
 // 3. UTILISATION DU FILTRE POUR LA LISTE DES PROMPTS
 $all_prompts = getFilteredPrompts($pdo, $f_cat, $f_user);
@@ -62,7 +62,7 @@ include 'header.php';
 
 <div class="container mt-4 pb-5">
     <div class="d-flex justify-content-between align-items-center mb-5">
-        <h2 class="fw-bold text-dark"><i class="bi bi-person-fill-gear"></i> Administration Panel</h2>
+        <h2 class="fw-bold text-dark"><i class="bi bi-person-fill-gear"></i> Espace Administration</h2>
         <span class="badge bg-primary p-2 d-flex align-items-center">Admin : <?= htmlspecialchars($_SESSION['user']) ?></span>
     </div>
 
@@ -203,7 +203,26 @@ include 'header.php';
                                     </button>
                                 </td>
                             </tr>
-                            <?php include 'read_prompt.php'; ?>
+                            <div class="modal fade" id="readModal<?= $p['id'] ?>" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold"><?= htmlspecialchars($p['title']) ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="badge bg-primary"><?= htmlspecialchars($p['cat_name']) ?></span>
+                    <small class="text-muted">Auteur : <strong><?= htmlspecialchars($p['username']) ?></strong></small>
+                </div>
+                <div class="bg-secondary-subtle  p-3 rounded" style="font-family: monospace; white-space: pre-wrap;"><?= htmlspecialchars($p['content']) ?></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
                             <?php endforeach; ?>
                         </tbody>
                     </table>

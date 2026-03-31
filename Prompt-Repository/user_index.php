@@ -1,19 +1,15 @@
 <?php
-ob_start();
 session_start();
 require 'db.php';
-require 'filter_prompt.php';
+require 'process_prompts.php';
 
 if (!isset($_SESSION['id'])) {
     header('Location: index.php');
     exit();
 }
 
-include 'add_prompt.php';    
-include 'edit_prompt.php';   
-include 'delete_prompt.php'; 
 
-$user_id = $_SESSION['id'];
+
 
 $my_cat = $_GET['my_cat'] ?? null;
 $others_cat = $_GET['others_cat'] ?? null;
@@ -21,10 +17,11 @@ $others_user = $_GET['others_user'] ?? null;
 
 $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAll();
 // Récupérer tous les utilisateurs sauf celui connecté
-$all_users = $pdo->query("SELECT id, username FROM users
-                          WHERE id != $user_id 
-                          ORDER BY username ASC"
-                        )->fetchAll();
+$all_users = $pdo->prepare("SELECT id, username FROM users 
+                            WHERE id != ?  AND  role !='admin'
+                            ORDER BY username ASC");
+$all_users->execute([$_SESSION['id']]);
+$all_users_list = $all_users->fetchAll();
 
 $my_prompts = getFilteredPrompts($pdo, $my_cat, $_SESSION['id']);
 $other_prompts = getFilteredPrompts($pdo, $others_cat, $others_user, $_SESSION['id']);
@@ -44,7 +41,32 @@ include 'header.php';
             </button>
         </div>
     </div>
-
+    <div class="modal fade" id="addPromptModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">Ajouter un prompt</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="text" name="title" class="form-control mb-2" placeholder="Titre" required>
+          <select name="category_id" class="form-select mb-2" required>
+            <option value="">Choisir une catégorie</option>
+            <?php foreach($categories as $c): ?>
+              <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['name']) ?></option>
+            <?php endforeach; ?>
+          </select>
+          <textarea name="content" class="form-control" placeholder="Contenu du prompt" required></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" name="add_prompt" class="btn btn-primary">Ajouter</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
     <div class="card border-0 border-top border-primary border-3 shadow-sm overflow-hidden mb-5" style="border-radius: 15px;">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center  border-bottom">
             <h5 class="mb-0 fw-bold"><i class="bi bi-collection-play text-primary me-2"></i>Mes Contributions</h5>
@@ -84,7 +106,85 @@ include 'header.php';
                             </div>
                         </td>
                     </tr>
-                    <?php include 'read_prompt.php'; include 'edit_prompt.php'; include 'delete_prompt.php'; ?>
+    <div class="modal fade" id="readModal<?= $p['id'] ?>" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold"><?= htmlspecialchars($p['title']) ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="badge bg-primary"><?= htmlspecialchars($p['cat_name']) ?></span>
+                    <small class="text-muted">Auteur : <strong><?= htmlspecialchars($p['username']) ?></strong></small>
+                </div>
+                <div class="bg-secondary-subtle  p-3 rounded" style="font-family: monospace; white-space: pre-wrap;"><?= htmlspecialchars($p['content']) ?></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="editModal<?= $p['id'] ?>" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <form action="" method="POST">
+                <input type="hidden" name="prompt_id" value="<?= $p['id'] ?>">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title fw-bold">✏️ Modifier le Prompt</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Titre</label>
+                        <input type="text" name="title" class="form-control" value="<?= htmlspecialchars($p['title']) ?>" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Catégorie</label>
+                        <select name="category_id" class="form-select">
+                            <?php foreach($categories as $cat): ?>
+                                <option value="<?= $cat['id'] ?>" <?= ($cat['id'] == $p['category_id']) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($cat['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Contenu</label>
+                        <textarea name="content" class="form-control" rows="6" required><?= htmlspecialchars($p['content']) ?></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" name="edit_prompt_submit" class="btn btn-warning fw-bold">Mettre à jour</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="deleteModal<?= $p['id'] ?>" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <form action="" method="POST">
+                <input type="hidden" name="prompt_id" value="<?= $p['id'] ?>">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirmation de suppression</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <i class="bi bi-exclamation-triangle text-danger display-4"></i>
+                    <p class="mt-3">Voulez-vous vraiment supprimer le prompt : <br><strong>"<?= htmlspecialchars($p['title']) ?>"</strong> ?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" name="delete_prompt_submit" class="btn btn-danger">Supprimer définitivement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+                    
                     <?php endforeach; ?>
                     <?php else: ?>
                     <tr>
@@ -139,7 +239,26 @@ include 'header.php';
                 </div>
             </div>
         </div>
-        <?php include 'read_prompt.php'; ?>
+        <div class="modal fade" id="readModal<?= $p['id'] ?>" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold"><?= htmlspecialchars($p['title']) ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="badge bg-primary"><?= htmlspecialchars($p['cat_name']) ?></span>
+                    <small class="text-muted">Auteur : <strong><?= htmlspecialchars($p['username']) ?></strong></small>
+                </div>
+                <div class="bg-secondary-subtle  p-3 rounded" style="font-family: monospace; white-space: pre-wrap;"><?= htmlspecialchars($p['content']) ?></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
         <?php endforeach; ?>
     </div>
 </div>
@@ -167,7 +286,7 @@ include 'header.php';
                         <label class="small text-uppercase fw-bold text-muted mb-2">Par Auteur</label>
                         <select name="others_user" class="form-select border-0 bg-light">
                             <option value="">Tous les auteurs</option>
-                            <?php foreach($all_users as $u): ?>
+                            <?php foreach($all_users_list as $u): ?>
                                 <option value="<?= $u['id'] ?>" <?= $others_user == $u['id'] ? 'selected' : '' ?>><?= $u['username'] ?></option>
                             <?php endforeach; ?>
                         </select>
